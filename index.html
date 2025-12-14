@@ -536,7 +536,7 @@
                 </div>
             </div>
             <div class="version-indicator">
-                <span>snapshot 1.10.0</span>
+                <span>snapshot 2.0.0</span>
             </div>
         </div>
         
@@ -549,7 +549,7 @@
                 </div>
                 <button id="back-to-menu-btn">Back to Menu</button>
                 <div class="version-indicator">
-                    <span>snapshot 1.10.0</span>
+                    <span>snapshot 2.0.0</span>
                 </div>
             </div>
         </div>
@@ -598,7 +598,7 @@
                 </div>
             </div>
             <div class="version-indicator">
-                <span>snapshot 1.10.0</span>
+                <span>snapshot 2.0.0</span>
             </div>
         </div>
     </div>
@@ -954,11 +954,12 @@
             }
         };
 
-        // Key for localStorage
+        // Keys for localStorage
         const SAVE_KEY = 'life_simulator_saves';
+        const LANGUAGE_KEY = 'life_simulator_language';
         
-        // Current language
-        let currentLang = 'en';
+        // Current language - load from localStorage or default to English
+        let currentLang = localStorage.getItem(LANGUAGE_KEY) || 'en';
         
         // Game variables
         let playerName = "Alex";
@@ -1024,6 +1025,9 @@
         
         // Initialize game
         function initGame() {
+            // Load saved language first
+            loadLanguage();
+            
             // Set up language button handlers
             languageButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -1031,8 +1035,8 @@
                     languageButtons.forEach(b => b.classList.remove('active'));
                     // Add active class to current button
                     this.classList.add('active');
-                    // Set language
-                    setLanguage(this.dataset.lang);
+                    // Set and save language
+                    setLanguage(this.dataset.lang, true);
                 });
             });
             
@@ -1044,9 +1048,6 @@
             menuButton.addEventListener('click', showMainMenu);
             newGameButton.addEventListener('click', confirmNewGame);
             
-            // Load English by default
-            setLanguage('en');
-            
             // Generate random name for example
             const sampleNames = currentLang === 'en' 
                 ? ['Alex', 'Sam', 'Jordan', 'Taylor', 'Morgan'] 
@@ -1056,6 +1057,33 @@
             
             // Check for autosave
             checkForAutoSave();
+        }
+        
+        // Load language from localStorage
+        function loadLanguage() {
+            const savedLang = localStorage.getItem(LANGUAGE_KEY);
+            if (savedLang) {
+                currentLang = savedLang;
+                
+                // Update language buttons
+                languageButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.lang === savedLang) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Set initial language
+                setLanguage(savedLang);
+            } else {
+                // Default to English
+                setLanguage('en');
+            }
+        }
+        
+        // Save language to localStorage
+        function saveLanguage(lang) {
+            localStorage.setItem(LANGUAGE_KEY, lang);
         }
         
         // Check for autosave
@@ -1071,9 +1099,14 @@
         }
         
         // Set language
-        function setLanguage(lang) {
+        function setLanguage(lang, saveToStorage = false) {
             currentLang = lang;
             const t = translations[lang];
+            
+            // Save language if requested
+            if (saveToStorage) {
+                saveLanguage(lang);
+            }
             
             // Update creation screen texts
             creationTitle.textContent = t.creationTitle;
@@ -1338,9 +1371,9 @@
             actionCounter = saveData.actionCounter || 0;
             eventTriggerCounter = saveData.eventTriggerCounter || 0;
             
-            // Set save language
+            // Set save language if different from current
             if (saveData.language && saveData.language !== currentLang) {
-                setLanguage(saveData.language);
+                setLanguage(saveData.language, true);
                 // Update active language button
                 languageButtons.forEach(btn => {
                     btn.classList.remove('active');
@@ -1529,16 +1562,16 @@
                 // Create effects text
                 let effectsText = '';
                 if (choice.effects.health) {
-                    effectsText += choice.effects.health > 0 ? `+${choice.effects.health} Health ` : `${choice.effects.health} Health `;
+                    effectsText += choice.effects.health > 0 ? `+${choice.effects.health} ${translations[currentLang].health} ` : `${choice.effects.health} ${translations[currentLang].health} `;
                 }
                 if (choice.effects.energy) {
-                    effectsText += choice.effects.energy > 0 ? `+${choice.effects.energy} Energy ` : `${choice.effects.energy} Energy `;
+                    effectsText += choice.effects.energy > 0 ? `+${choice.effects.energy} ${translations[currentLang].energy} ` : `${choice.effects.energy} ${translations[currentLang].energy} `;
                 }
                 if (choice.effects.happiness) {
-                    effectsText += choice.effects.happiness > 0 ? `+${choice.effects.happiness} Happiness ` : `${choice.effects.happiness} Happiness `;
+                    effectsText += choice.effects.happiness > 0 ? `+${choice.effects.happiness} ${translations[currentLang].happiness} ` : `${choice.effects.happiness} ${translations[currentLang].happiness} `;
                 }
                 if (choice.effects.money) {
-                    effectsText += choice.effects.money > 0 ? `+${choice.effects.money} Money ` : `${choice.effects.money} Money `;
+                    effectsText += choice.effects.money > 0 ? `+${choice.effects.money} ${translations[currentLang].money} ` : `${choice.effects.money} ${translations[currentLang].money} `;
                 }
                 
                 choiceElement.innerHTML = `
