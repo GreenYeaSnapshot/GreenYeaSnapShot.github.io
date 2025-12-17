@@ -435,6 +435,12 @@
             transform: translateY(-3px);
         }
         
+        .like-btn.voted {
+            background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(39, 174, 96, 0.5);
+        }
+        
         .dislike-btn {
             background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
         }
@@ -442,6 +448,12 @@
         .dislike-btn:hover {
             background: linear-gradient(90deg, #c0392b 0%, #e74c3c 100%);
             transform: translateY(-3px);
+        }
+        
+        .dislike-btn.voted {
+            background: linear-gradient(90deg, #c0392b 0%, #e74c3c 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
         }
         
         .vote-count {
@@ -1114,6 +1126,7 @@
         let likes = 0;
         let dislikes = 0;
         let userVoted = false;
+        let userVoteType = null;
         
         // DOM elements
         const creationScreen = document.getElementById('creation-screen');
@@ -1242,17 +1255,22 @@
                 dislikes = data.dislikes || 0;
             }
             
-            // Check if user already voted
+            // Check if current user already voted
             const userVote = localStorage.getItem(USER_VOTE_KEY);
             if (userVote) {
                 userVoted = true;
-                // Disable buttons if already voted
-                likeBtn.disabled = true;
-                dislikeBtn.disabled = true;
-                likeBtn.style.opacity = '0.7';
-                dislikeBtn.style.opacity = '0.7';
-                likeBtn.style.cursor = 'not-allowed';
-                dislikeBtn.style.cursor = 'not-allowed';
+                userVoteType = userVote;
+                
+                // Update button appearance to show user's vote
+                if (userVote === 'like') {
+                    likeBtn.classList.add('voted');
+                    likeBtn.disabled = true;
+                    dislikeBtn.disabled = true;
+                } else if (userVote === 'dislike') {
+                    dislikeBtn.classList.add('voted');
+                    likeBtn.disabled = true;
+                    dislikeBtn.disabled = true;
+                }
             }
             
             updateRatingDisplay();
@@ -1262,7 +1280,9 @@
         function saveRating() {
             const ratingData = {
                 likes: likes,
-                dislikes: dislikes
+                dislikes: dislikes,
+                total: likes + dislikes,
+                lastUpdated: new Date().getTime()
             };
             localStorage.setItem(RATING_KEY, JSON.stringify(ratingData));
         }
@@ -1276,28 +1296,33 @@
             
             if (type === 'like') {
                 likes++;
+                userVoteType = 'like';
+                likeBtn.classList.add('voted');
+                dislikeBtn.classList.remove('voted');
             } else if (type === 'dislike') {
                 dislikes++;
+                userVoteType = 'dislike';
+                dislikeBtn.classList.add('voted');
+                likeBtn.classList.remove('voted');
             }
             
-            // Save vote
+            // Save user's vote
             userVoted = true;
             localStorage.setItem(USER_VOTE_KEY, type);
             
-            // Disable buttons
+            // Disable buttons after vote
             likeBtn.disabled = true;
             dislikeBtn.disabled = true;
-            likeBtn.style.opacity = '0.7';
-            dislikeBtn.style.opacity = '0.7';
-            likeBtn.style.cursor = 'not-allowed';
-            dislikeBtn.style.cursor = 'not-allowed';
             
-            // Save rating
+            // Save rating to shared storage
             saveRating();
             updateRatingDisplay();
             
             // Show thank you message
             showSaveMessage(translations[currentLang].voteThankYou);
+            
+            // Log the vote (for debugging)
+            console.log(`User voted ${type}. Total: ${likes} likes, ${dislikes} dislikes`);
         }
         
         // Update rating display
